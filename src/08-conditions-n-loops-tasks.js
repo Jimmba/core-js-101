@@ -377,10 +377,46 @@ function toNaryString(num, n) {
  *   ['/web/assets/style.css', '/.bin/mocha',  '/read.me'] => '/'
  *   ['/web/favicon.ico', '/web-scripts/dump', '/webalizer/logs'] => '/'
  */
-function getCommonDirectoryPath(/* pathes */) {
-  throw new Error('Not implemented');
-}
+function getCommonDirectoryPath(pathes) {
+  const minArray = {
+    length: +Infinity,
+    index: null,
+  };
 
+  const array = [];
+
+  pathes.forEach((el) => {
+    array.push(el.split('/'));
+  });
+  array.map((el, index) => {
+    if (el.length < minArray.length) {
+      minArray.length = el.length;
+      minArray.index = index;
+    }
+    return el;
+  });
+
+  let counter = 0;
+  for (let i = 0; i < minArray.length; i += 1) {
+    const everyoneIsEqual = array.every((el) => {
+      if (el[i] === array[minArray.index][i]) {
+        return true;
+      }
+      return false;
+    });
+    if (everyoneIsEqual) {
+      counter += 1;
+    } else {
+      break;
+    }
+  }
+
+  let result = array[minArray.index];
+  result.length = counter;
+  result = result.join('/');
+  if (counter !== 0) result += '/';
+  return result;
+}
 
 /**
  * Returns the product of two specified matrixes.
