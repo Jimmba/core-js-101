@@ -113,32 +113,94 @@ function fromJSON(proto, json) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  string: '',
+  selectorUsed: [false, false, false, false, false, false],
+
+  copyObject(obj) {
+    const object = { ...obj };
+    object.selectorUsed = obj.selectorUsed.slice();
+    return object;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  getString(value) {
+    this.string = this.string ? this.string : '';
+    this.string += value;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  shouldNotOccurMoreThenOneTime() {
+    throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  checkOrder(order) {
+    for (let i = order + 1; i < this.selectorUsed.length; i += 1) {
+      if (this.selectorUsed[i]) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    this.checkOrder(0);
+    const element = this.copyObject(this);
+    if (element.selectorUsed[0]) this.shouldNotOccurMoreThenOneTime();
+    element.selectorUsed[0] = true;
+    element.getString(value);
+    return element;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    this.checkOrder(1);
+    const element = this.copyObject(this);
+    if (element.selectorUsed[1]) this.shouldNotOccurMoreThenOneTime();
+    element.selectorUsed[1] = true;
+    element.getString(`#${value}`);
+    return element;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.checkOrder(2);
+    const element = this.copyObject(this);
+    element.selectorUsed[2] = true;
+    element.getString(`.${value}`);
+    return element;
+  },
+
+  attr(value) {
+    this.checkOrder(3);
+    const element = this.copyObject(this);
+    element.selectorUsed[3] = true;
+    element.getString(`[${value}]`);
+    return element;
+  },
+
+  pseudoClass(value) {
+    this.checkOrder(4);
+    const element = this.copyObject(this);
+    element.selectorUsed[4] = true;
+    element.getString(`:${value}`);
+    return element;
+  },
+
+  pseudoElement(value) {
+    this.checkOrder(5);
+    const element = this.copyObject(this);
+    if (element.selectorUsed[5]) this.shouldNotOccurMoreThenOneTime();
+    element.selectorUsed[5] = true;
+    element.getString(`::${value}`);
+    return element;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const str1 = selector1.stringify();
+    const str2 = selector2.stringify();
+    this.string = `${str1} ${combinator} ${str2}`;
+    return this;
+  },
+
+  stringify() {
+    const value = this.string;
+    this.string = '';
+    return value;
   },
 };
 
